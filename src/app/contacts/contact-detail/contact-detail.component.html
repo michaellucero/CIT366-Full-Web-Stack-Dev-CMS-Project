@@ -2,12 +2,12 @@
   <div class="panel-heading">
     <div class="row">
       <div class="col-md-12">
-        <p> Place Holder </p>
+        <p> {{contact.name}} </p>
       </div>
     </div>
     <div class="row center-content-vertical">
       <div class="col-md-6">
-        <img src="" alt="" class="img-responsive" style="min-height: 100px;"/>
+        <img src="{{contact.imageUrl}}" alt="" class="img-responsive" style="min-height: 100px;"/>
       </div>
       <div class="col-md-6">
         <div class="btn-toolbar pull-right">
@@ -21,10 +21,10 @@
     <div class="col-md-12">
       <div class="panel-body">
         <p>
-          <span style="font-size: 20px;"><b>Email:</b> </span>
+          <span style="font-size: 20px;"><b>Email: </b>{{contact.email}}</span>
         </p>
         <p>
-          <span style="font-size: 20px;"><b>Phone:</b> </span>
+          <span style="font-size: 20px;"><b>Phone: </b>{{contact.phone}}</span>
         </p>
       </div>
     </div>
