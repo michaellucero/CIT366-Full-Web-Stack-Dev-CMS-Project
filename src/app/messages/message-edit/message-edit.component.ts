@@ -1,5 +1,6 @@
 import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { Message } from '../message.model';
+import { MessageService } from '../message.service';
 
 @Component({
   selector: 'app-message-edit',
@@ -10,9 +11,9 @@ export class MessageEditComponent implements OnInit {
   @ViewChild('subject') subject: ElementRef;
   @ViewChild('msgText') msgText: ElementRef;
   @Output() addMessageEvent = new EventEmitter<Message>();
-  currentSender = 'Michael';
+  currentSender = '1';
 
-  constructor() { }
+  constructor(private messageService: MessageService) { }
 
   ngOnInit() {
   }
@@ -23,8 +24,10 @@ export class MessageEditComponent implements OnInit {
 
     // logic to not allow submission unless form input is filled in
     if (msgText.length > 0 && subject.length > 0 ) {
-      const message = new Message(1, subject, msgText, this.currentSender);
-      this.addMessageEvent.emit(message);
+
+      // later needs to be changed to not be hard coded
+      const message = new Message('1', subject, msgText, this.currentSender);
+      this.messageService.addMessage(message);
 
       // reset fields after message submission to start fresh for new input
       this.onClear();
