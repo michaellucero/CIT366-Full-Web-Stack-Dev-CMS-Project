@@ -2,17 +2,17 @@
   <div class="panel-heading">
     <div class="row">
       <div class="col-md-12">
-        <p> {{contact.name}} </p>
+        <h3> {{contact.name}} </h3>
       </div>
     </div>
     <div class="row center-content-vertical">
-      <div class="col-md-6">
+      <div class="col-md-5">
         <img src="{{contact.imageUrl}}" alt="" class="img-responsive" style="min-height: 100px;"/>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-7">
         <div class="btn-toolbar pull-right">
-          <a type="button" class="btn btn-primary">Edit</a>
-          <a type="button" class="btn btn-danger">Delete</a>
+          <a [routerLink]="['edit']" type="button" class="btn btn-primary">Edit</a>
+          <a (click)="onDelete()" type="button" class="btn btn-danger">Delete</a>
         </div>
       </div>
     </div>
