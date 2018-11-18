@@ -8,7 +8,15 @@
    <div class="panel-body">
       <div class="table">
          <div>
-              <app-contact-item style="cursor: pointer;" *ngFor="let contact of contacts" [contact]="contact"></app-contact-item>
+              <app-contact-item
+                dnd-draggable
+                [dragEnabled]="true"
+                style="cursor: pointer;"
+                *ngFor="let contact of contacts"
+                [contact]="contact"
+                [dragData]="contact"
+                [dropZones]="['groupContacts']">
+              </app-contact-item>
          </div>
       </div>
    </div>
