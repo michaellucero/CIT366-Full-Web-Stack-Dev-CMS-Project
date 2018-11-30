@@ -1,24 +1,49 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Document } from './document.model';
-import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 import { Subject } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 // @Injectable({
 //   providedIn: 'root'
 // })
+@Injectable()
 export class DocumentService {
+
+  private documentsURL = '*** REPLACE WITH Documents URL ***';
 
   documentListChangedEvent = new Subject<Document[]>();
   documentSelectedEvent = new EventEmitter<Document>();
   documents: Document[] = [];
   maxDocumentId: number;
 
-  constructor() {
-    this.documents = MOCKDOCUMENTS;
+  constructor(private http: HttpClient) {
     this.maxDocumentId = this.getMaxId();
   }
 
   getDocuments(): Document[] {
+
+    this.http.get(this.documentsURL).subscribe(
+      (documents: Document[]) => {
+        this.documents = documents;
+        this.maxDocumentId = this.getMaxId();
+        this.documents.sort( (currentArg, nextArg) => {
+          if (currentArg < nextArg) {
+            return -1;
+          }
+
+          if (currentArg > nextArg) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+        this.documentListChangedEvent.next(documents.slice());
+      },
+    (error: any) => {
+        console.log(error);
+      }
+    );
+
     return this.documents.slice();
   }
 
@@ -37,8 +62,7 @@ export class DocumentService {
     }
 
     this.documents.splice(pos, 1);
-    const documentListClone = this.documents.slice();
-    this.documentListChangedEvent.next(documentListClone);
+    this.storeDocuments();
   }
 
   getMaxId(): number {
@@ -63,8 +87,7 @@ export class DocumentService {
     this.maxDocumentId++;
     newDocument.id = this.maxDocumentId.toString();
     this.documents.push(newDocument);
-    const documentListClone = this.documents.slice();
-    this.documentListChangedEvent.next(documentListClone);
+    this.storeDocuments();
   }
 
   updateDocument(originalDocument: Document, newDocument: Document) {
@@ -78,8 +101,16 @@ export class DocumentService {
     } else {
       newDocument.id = originalDocument.id;
       this.documents[position] = newDocument;
-      const documentListClone = this.documents.slice();
-      this.documentListChangedEvent.next(documentListClone);
+      this.storeDocuments();
     }
+  }
+
+  storeDocuments() {
+    const jsonDocuments = JSON.stringify(this.documents);
+    const headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    this.http.put(this.documentsURL, jsonDocuments, {headers: headers}).subscribe(() => {
+      this.documentListChangedEvent.next(this.documents.slice());
+    });
   }
 }
