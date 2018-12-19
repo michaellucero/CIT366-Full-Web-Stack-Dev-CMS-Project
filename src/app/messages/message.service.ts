@@ -9,7 +9,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 })
 export class MessageService {
 
-  private messagesURL = '*** REPLACE WITH Messages URL ***';
+  private messagesURL = 'messages';
 
   maxMessageId: number;
   messageChangeEvent = new EventEmitter<Message[]>();
@@ -20,14 +20,37 @@ export class MessageService {
     // load contacts if not loaded because messages depend on contacts Id
     if (this.contactsService.contacts.length < 1) {
       this.contactsService.getContacts();
-      setTimeout(() => { this.initMessages(); }, 1200);
+      setTimeout(() => { this.getMessages(); }, 2500);
     } else {
-      this.initMessages();
+      this.getMessages();
     }
   }
 
 
   getMessages(): Message[] {
+
+    this.http.get<{message: String, messages: Message[]}>(this.messagesURL).subscribe(
+      (responseData) => {
+        this.messages = responseData.messages;
+        this.maxMessageId = this.getMaxId();
+        this.messages.sort( (currentArg, nextArg) => {
+          if (currentArg < nextArg) {
+            return -1;
+          }
+
+          if (currentArg > nextArg) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+
+        this.messageChangeEvent.next(this.messages.slice());
+      },
+      (error: any) => {
+        console.log(error);
+      });
+
     return this.messages.slice();
   }
 
@@ -37,14 +60,26 @@ export class MessageService {
 
   addMessage(newMessage: Message) {
 
-    this.maxMessageId++;
-    newMessage.id = this.maxMessageId.toString();
-    this.messages.push(newMessage);
-    this.storeMessages();
+    if (!newMessage) {
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    newMessage.id = '';
+
+    this.http.post<{mess: String, message: Message}>('http://localhost:3000/messages', newMessage, {headers: headers})
+      .subscribe(
+        (responseData) => {
+          this.messages.push(responseData.message);
+          this.messageChangeEvent.next(this.messages.slice());
+        }
+      );
   }
 
   initMessages() {
-
 
     this.http.get(this.messagesURL).subscribe(
       (messages: Message[]) => {

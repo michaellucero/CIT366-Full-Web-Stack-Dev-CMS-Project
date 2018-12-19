@@ -1,7 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Document } from './document.model';
 import { Subject } from 'rxjs';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 // @Injectable({
 //   providedIn: 'root'
@@ -9,7 +9,7 @@ import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 @Injectable()
 export class DocumentService {
 
-  private documentsURL = '*** REPLACE WITH Documents URL ***';
+  private documentsURL = 'documents';
 
   documentListChangedEvent = new Subject<Document[]>();
   documentSelectedEvent = new EventEmitter<Document>();
@@ -22,9 +22,10 @@ export class DocumentService {
 
   getDocuments(): Document[] {
 
-    this.http.get(this.documentsURL).subscribe(
-      (documents: Document[]) => {
-        this.documents = documents;
+    this.http.get<{message: String, documents: Document[]}>(this.documentsURL)
+      .subscribe(
+      (responseData) => {
+        this.documents = responseData.documents;
         this.maxDocumentId = this.getMaxId();
         this.documents.sort( (currentArg, nextArg) => {
           if (currentArg < nextArg) {
@@ -37,7 +38,8 @@ export class DocumentService {
             return 0;
           }
         });
-        this.documentListChangedEvent.next(documents.slice());
+
+        this.documentListChangedEvent.next(this.documents.slice());
       },
     (error: any) => {
         console.log(error);
@@ -55,14 +57,24 @@ export class DocumentService {
     if (!document) {
       return;
     }
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
 
     const pos = this.documents.indexOf(document);
     if (pos < 0) {
       return;
     }
 
-    this.documents.splice(pos, 1);
-    this.storeDocuments();
+    this.http.delete<{message: String}>('http://localhost:3000/documents/' +
+      document.id, {headers: headers})
+      .subscribe(
+        () => {
+          this.documents.splice(pos, 1);
+          this.documentListChangedEvent.next(this.documents.slice());
+        }
+      );
   }
 
   getMaxId(): number {
@@ -84,10 +96,19 @@ export class DocumentService {
       return;
     }
 
-    this.maxDocumentId++;
-    newDocument.id = this.maxDocumentId.toString();
-    this.documents.push(newDocument);
-    this.storeDocuments();
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    newDocument.id = '';
+
+    this.http.post<{message: String, document: Document}>('http://localhost:3000/documents', newDocument, {headers: headers})
+      .subscribe(
+        (responseData) => {
+          this.documents.push(responseData.document);
+          this.documentListChangedEvent.next(this.documents.slice());
+        }
+      );
   }
 
   updateDocument(originalDocument: Document, newDocument: Document) {
@@ -100,17 +121,19 @@ export class DocumentService {
       return;
     } else {
       newDocument.id = originalDocument.id;
-      this.documents[position] = newDocument;
-      this.storeDocuments();
     }
-  }
 
-  storeDocuments() {
-    const jsonDocuments = JSON.stringify(this.documents);
-    const headers = new HttpHeaders({'Content-Type': 'application/json'});
-
-    this.http.put(this.documentsURL, jsonDocuments, {headers: headers}).subscribe(() => {
-      this.documentListChangedEvent.next(this.documents.slice());
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
     });
+
+    this.http.put<{message: String}>('http://localhost:3000/documents/' +
+      newDocument.id, newDocument, {headers: headers})
+      .subscribe(
+        () => {
+          this.documents[position] = newDocument;
+          this.documentListChangedEvent.next(this.documents.slice());
+        }
+      );
   }
 }
